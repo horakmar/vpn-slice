@@ -12,7 +12,7 @@ from ipaddress import ip_network, ip_address, IPv4Address, IPv4Network, IPv6Addr
 
 from .version import __version__
 if os.uname().sysname=='Linux':
-    from .linux import pid2exe, ppidof, check_tun, write_hosts, dig, iproute, iptables, find_paths
+    from .linux import pid2exe, ppidof, check_tun, write_hosts, dig, iproute, iptables, find_paths, resolvconf
 else:
     raise OSError('non-Linux operating system is unsupported')
 
@@ -173,6 +173,11 @@ def do_post_connect(env, args):
         write_hosts(host_map, 'vpn-slice-%s AUTOCREATED' % args.name)
         if args.verbose:
             print("Added hostnames and aliases for %d addresses to /etc/hosts." % len(host_map), file=stderr)
+
+    # Configure nameservers via resolvconf (Ubuntu Xenial)
+    if args.verbose:
+        print("Configuring DNS resolver...", file=stderr)
+    res = resolvconf(env.dns, env.tundev)
 
     # add routes to hosts
     for ip in ip_routes:

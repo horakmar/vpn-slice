@@ -4,10 +4,11 @@ from shutil import which
 from ipaddress import ip_address
 
 def find_paths():
-    global DIG, IPROUTE, HOSTS, IPTABLES
+    global DIG, IPROUTE, HOSTS, IPTABLES, RESOLVCONF
     DIG = which('dig') or '/usr/bin/dig'
     IPROUTE = which('ip') or '/sbin/ip'
     IPTABLES = which('iptables') or '/sbin/iptables'
+    RESOLVCONF = which('resolvconf') or '/sbin/resolvconf'
     HOSTS = '/etc/hosts'
 
     for binary in (DIG, IPROUTE, IPTABLES):
@@ -75,6 +76,15 @@ def dig(bind, host, dns, domains=None, reverse=False):
                     except ValueError:
                         pass     # didn't return an IP address!
     return out or None
+
+def resolvconf(dns, device):
+    global RESOLVCONF
+    cl = [RESOLVCONF, '-a', device]
+    p = sp.Popen(cl, stdout=sp.PIPE, stdin=sp.PIPE, stderr=sp.STDOUT)
+    dnsconf = ''
+    for ip in dns:
+        dnsconf += "nameserver {}\n".format(ip)
+    p.communicate(input=dnsconf.encode())
 
 def iproute(*args):
     global IPROUTE
